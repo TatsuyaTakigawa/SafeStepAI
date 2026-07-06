@@ -44,6 +44,14 @@ SafeStep AI は、学校内階段における逆走行為をリアルタイム�
 
 ---
 
+# クラス図
+
+システムを構成する主要クラスとその関係を示します。
+
+![SafeStep AI Class Diagram](docs/class_diagram.png)
+
+---
+
 # 使用技術
 
 ## ハードウェア
