@@ -1,0 +1,52 @@
+@startuml
+title SafeStep AI クラス図（初期設計）
+
+class Camera {
+    - cameraId : int
+    + initialize()
+    + captureFrame()
+    + release()
+}
+
+class VisionProcessor {
+    - model
+    + loadModel()
+    + processFrame(frame)
+}
+
+class DirectionJudge {
+    - virtualLine
+    + judge(tracks)
+}
+
+class VoicePlayer {
+    - cooldownTime
+    - lastPlayTime
+    + canPlay()
+    + playWarning()
+}
+
+class DatabaseManager {
+    - connection
+    + connect()
+    + saveResult(result)
+    + close()
+}
+
+class Config {
+    + confidenceThreshold
+    + modelPath
+    + warningCooldown
+    + databasePath
+}
+
+Camera --> VisionProcessor : frame
+VisionProcessor --> DirectionJudge : tracking results
+DirectionJudge --> VoicePlayer : warning
+DirectionJudge --> DatabaseManager : result
+
+VisionProcessor ..> Config
+VoicePlayer ..> Config
+DatabaseManager ..> Config
+
+@enduml
