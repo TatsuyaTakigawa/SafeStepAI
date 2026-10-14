@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respond(405, ['ok' => false, 'error' => 'method not allowed']);
 }
 
-$config = require __DIR__ . '/../../../safestep_private/config.php';
+$config = require __DIR__ . '/../../../../safestep_private/config.php';
 
 // APIキーの確認
 $sent_key = $_SERVER['HTTP_X_API_KEY'] ?? '';

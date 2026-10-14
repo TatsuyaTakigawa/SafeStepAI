@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/auth.php';
 
-$config = require __DIR__ . '/../../safestep_private/config.php';
+$config = require __DIR__ . '/../../../safestep_private/config.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

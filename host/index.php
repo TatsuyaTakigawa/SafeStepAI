@@ -2,7 +2,7 @@
 require __DIR__ . '/auth.php';
 require_login();
 
-$config = require __DIR__ . '/../../safestep_private/config.php';
+$config = require __DIR__ . '/../../../safestep_private/config.php';
 
 function h($value): string
 {
