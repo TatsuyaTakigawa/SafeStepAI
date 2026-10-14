@@ -18,7 +18,7 @@ if ! [[ "$HOST_IP" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
     exit 1
 fi
 
-export SAFESTEP_URL="http://${HOST_IP}/safestep/api/event.php"
+export SAFESTEP_URL="http://${HOST_IP}/safestep/host/api/event.php"
 export SAFESTEP_DEVICE="${SAFESTEP_DEVICE:-pi-01}"
 
 if [ -z "$SAFESTEP_API_KEY" ]; then
