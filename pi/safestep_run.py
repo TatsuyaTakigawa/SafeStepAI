@@ -1,4 +1,6 @@
+import os
 import threading
+import time
 
 from ultralytics import YOLO
 
@@ -13,6 +15,12 @@ MARGIN = 20
 # Provisional: the direction treated as normal. The opposite is reported as reverse.
 NORMAL_DIRECTION = "DOWN"
 
+# Alarm settings
+REVERSE_WINDOW_SEC = 30    # count reverse crossings seen in the last N seconds
+REVERSE_THRESHOLD = 1      # every reverse crossing sounds the alarm
+ALARM_COOLDOWN_SEC = 0    # no cooldown here; alarm_player.py prevents overlapping
+ALARM_TRIGGER_PATH = "trigger"
+
 
 def send_async(track_id, direction, is_reverse):
     """Send in a background thread so detection never waits for the network."""
@@ -24,11 +32,37 @@ def send_async(track_id, direction, is_reverse):
     threading.Thread(target=worker, daemon=True).start()
 
 
+def fire_alarm():
+    """Update the trigger file. The player on the Pi host plays the sound."""
+    try:
+        with open(ALARM_TRIGGER_PATH, "w") as f:
+            f.write(str(time.time()))
+        os.chmod(ALARM_TRIGGER_PATH, 0o666)
+        return True
+    except OSError as e:
+        print(f"  -> alarm trigger failed ({type(e).__name__})")
+        return False
+
+
+def count_recent_reverse(reverse_times, now):
+    """Drop old entries and return how many different people crossed in reverse recently."""
+    old_ids = [t for t, ts in reverse_times.items() if now - ts > REVERSE_WINDOW_SEC]
+    for tid in old_ids:
+        del reverse_times[tid]
+    return len(reverse_times)
+
+
 def main():
     model = YOLO(MODEL_PATH)
     previous_side = {}
+    reverse_times = {}   # track_id -> time of the latest reverse crossing
+    last_alarm = None
 
     print(f"Start. LINE_Y={LINE_Y} MARGIN={MARGIN} NORMAL_DIRECTION={NORMAL_DIRECTION}")
+    print(
+        f"Alarm: {REVERSE_THRESHOLD} people within {REVERSE_WINDOW_SEC}s, "
+        f"cooldown {ALARM_COOLDOWN_SEC}s"
+    )
     print("Press Ctrl+C to stop.")
 
     results = model.track(
@@ -69,6 +103,28 @@ def main():
                         f"cy:{cy:.1f} [{label}]"
                     )
                     send_async(track_id, direction, is_reverse)
+
+                    if is_reverse:
+                        now = time.monotonic()
+                        reverse_times[track_id] = now
+                        count = count_recent_reverse(reverse_times, now)
+                        print(
+                            f"  -> reverse count in last {REVERSE_WINDOW_SEC}s: "
+                            f"{count}/{REVERSE_THRESHOLD}"
+                        )
+
+                        if count >= REVERSE_THRESHOLD:
+                            cooled_down = (
+                                last_alarm is None
+                                or now - last_alarm >= ALARM_COOLDOWN_SEC
+                            )
+                            if cooled_down:
+                                print("  -> ALARM")
+                                if fire_alarm():
+                                    last_alarm = now
+                                    reverse_times.clear()
+                            else:
+                                print("  -> threshold reached, but cooling down")
 
             previous_side[track_id] = side
 
