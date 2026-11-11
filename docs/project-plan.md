@@ -91,10 +91,8 @@
 
 ## 8. 変更管理・関連資料
 
-実装変更が要求・設計・運用手順へ影響する場合は、関連文書も同時に見直します。ブランチ・Pull Request等の開発ルールは[`../CONTRIBUTING.md`](../CONTRIBUTING.md)を参照してください。
-
+実装変更が要求・設計・運用手順へ影響する場合は、関連文書も同時に見直します。
 - [要求仕様書](requirements-specification.md)
 - [データベース設計書](database-design.md)
-- [プロジェクト計画書テンプレート](project-plan-template.md)
 - [リポジトリ概要](../README.md)
 - [ダッシュボード運用手順](../host/README.md)
