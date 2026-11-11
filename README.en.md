@@ -98,14 +98,6 @@ Detection and the web application/database run separately. The dashboard device 
 └── README.en.md                # English
 ```
 
-## Design Reference
-
-The image below is a conceptual class diagram from the initial design. Some parts differ from the current implementation, so it is provided as a design reference rather than a complete diagram of the implemented classes.
-
-<p align="center">
-  <img src="docs/class_diagram.png" alt="SafeStep AI initial design class diagram" width="720">
-</p>
-
 ## Setup
 
 ### Dashboard Device
