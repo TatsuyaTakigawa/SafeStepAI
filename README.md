@@ -98,14 +98,6 @@ flowchart LR
 └── README.en.md                # English
 ```
 
-## 設計資料
-
-以下は初期設計時の概念クラス図です。現行の実装構成とは異なる部分があるため、実装の完全なクラス構成ではなく設計参考資料として掲載しています。
-
-<p align="center">
-  <img src="docs/class_diagram.png" alt="SafeStep AI 初期設計クラス図" width="720">
-</p>
-
 ## セットアップ
 
 ### ダッシュボード端末
