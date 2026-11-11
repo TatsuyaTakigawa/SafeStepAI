@@ -89,7 +89,7 @@ Detection and the web application/database run separately. The dashboard device 
 ├── host/
 │   ├── database/               # Database initialization SQL
 │   ├── host/                   # Web application and API
-���   ├── compose.yaml            # Docker Compose configuration
+│   ├── compose.yaml            # Docker Compose configuration
 │   └── README.md               # Dashboard setup and operation guide
 ├── pi/                         # Detection client, startup, and audio scripts
 ├── CONTRIBUTING.md
