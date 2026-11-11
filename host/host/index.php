@@ -2,7 +2,7 @@
 require __DIR__ . '/auth.php';
 require_login();
 
-$config = require __DIR__ . '/../../../safestep_private/config.php';
+$config = require '/var/www/private/config.php';
 
 function h($value): string
 {
@@ -93,6 +93,24 @@ try {
 
 <section>
 <div class="section-head">
+    <h2>イベント分析</h2>
+    <span class="section-note">直近24時間・時間別集計</span>
+</div>
+<p class="chart-status" id="chart-status" role="status">グラフデータを読み込んでいます。</p>
+<div class="charts">
+    <div class="chart-panel">
+        <h3>時間別イベント・逆走率</h3>
+        <div class="chart-wrap"><canvas id="hourly-chart" aria-label="時間別イベントと逆走率"></canvas></div>
+    </div>
+    <div class="chart-panel chart-panel-doughnut">
+        <h3>通常・逆走の割合</h3>
+        <div class="chart-wrap"><canvas id="direction-chart" aria-label="通常イベントと逆走イベントの割合"></canvas></div>
+    </div>
+</div>
+</section>
+
+<section>
+<div class="section-head">
     <h2>端末ごとの状況</h2>
     <span class="section-note">バーは各端末の逆走率</span>
 </div>
@@ -114,6 +132,7 @@ try {
     <tr>
         <td><?= h($d['device_name']) ?></td>
         <td><?= number_format((int)$d['total']) ?></td>
+        <td><?= number_format((int)$d['reverse_count']) ?></td>
         <td class="rate-cell">
             <div class="rate-line">
                 <span class="rate-value"><?= number_format($deviceRate, 1) ?>%</span>
@@ -168,5 +187,7 @@ try {
 
 <?php endif; ?>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+<script src="assets/dashboard.js" defer></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ require_login();
 
 header('Content-Type: application/json; charset=utf-8');
 
-$config = require __DIR__ . '/../../../../safestep_private/config.php';
+$config = require '/var/www/private/config.php';
 
 try {
     $dsn = "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4";
