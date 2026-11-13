@@ -167,5 +167,4 @@ PlantUML は現行のスクリプト/API構成を示すモジュール構成図�
 
 ## 参考・ライセンス
 
-- README の構成・見せ方の参考：[note 記事](https://note.com/yukikkoaimanabi/n/n587aa648e0f9#809c1104-0bf1-4e3c-b4d2-13aa54cd37c2)
 - ライセンス：[MIT License](LICENSE)
