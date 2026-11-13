@@ -14,12 +14,12 @@
 
 | サブシステム | 現在の構成 |
 | --- | --- |
-| 検知 | Raspberry Pi上のPython、Ultralytics YOLOトラッキング、仮想ライン方向判定 |
-| 音声 | ホスト上のPythonプレイヤー、`aplay`、`pi/warning_audio/alert.wav` |
-| イベント連携 | APIキー付きHTTP POST。送信項目は端末名、発生時刻、追跡ID、方向、逆走フラグ |
-| ダッシュボード | PHP 8.3 + Apache。ログイン、イベント表示、端末別集計、直近24時間の分析 |
-| データベース | MariaDB 11.4、単一の`events`テーブル。Composeボリュームに永続化 |
-| 配備 | ダッシュボードとDBはDocker Compose。検知端末は`pi/start_safestep.sh`から実行 |
+| 検知 | Raspberry Pi上のPython、Ultralytics YOLOトラッキング、仮想ライン方向判定（[`safestep_run.py`](../pi/safestep_run.py)） |
+| 音声 | ホスト上のPythonプレイヤー、`aplay`、[`alert.wav`](../pi/warning_audio/alert.wav)（[`alarm_player.py`](../pi/alarm_player.py)） |
+| イベント連携 | APIキー付きHTTP POST。送信項目は端末名、発生時刻、追跡ID、方向、逆走フラグ（[`safestep_client.py`](../pi/safestep_client.py)） |
+| ダッシュボード | PHP 8.3 + Apache。ログイン、イベント表示、端末別集計、直近24時間の分析（[`index.php`](../host/host/index.php)、[`analytics.php`](../host/host/api/analytics.php)） |
+| データベース | MariaDB 11.4、単一の`events`テーブル。Composeボリュームに永続化（[`001-create-events.sql`](../host/database/init/001-create-events.sql)） |
+| 配備 | ダッシュボードとDBは[`compose.yaml`](../host/compose.yaml)。検知端末は[`start_safestep.sh`](../pi/start_safestep.sh)から実行 |
 
 個別の検知端末とダッシュボード端末を分離して配置できます。現行コードにはクラウド連携、CSV/SQLite保存、日次統計テーブル、Cronによる運転時間制御、複数階段の稼働監視は実装済み機能として含めません。
 
@@ -46,11 +46,11 @@
 
 ## 4. 成果物
 
-- 検知端末用スクリプト：`pi/`
-- ダッシュボード/APIとDB初期化ファイル：`host/`
-- システム概要・運用手順：`README.md`、`README.en.md`、`host/README.md`
-- 要求・設計文書：`docs/requirements-specification.md`、`docs/database-design.md`
-- 設計資料：`docs/`内の図・PlantUML
+- 検知端末用スクリプト：[ `pi/` ](../pi/)
+- ダッシュボード/APIとDB初期化ファイル：[ `host/` ](../host/)
+- システム概要・運用手順：[`README.md`](../README.md)、[`README.en.md`](../README.en.md)、[`host/README.md`](../host/README.md)
+- 要求・設計文書：[`requirements-specification.md`](requirements-specification.md)、[`database-design.md`](database-design.md)
+- 設計資料：[`class_diagram.puml`](class_diagram.puml)、[`class_diagram.png`](class_diagram.png)
 - 試験記録・卒業制作発表資料：実施後に作成・保管（現時点での完了を前提としない）
 
 ## 5. 作業計画
@@ -92,7 +92,11 @@
 ## 8. 変更管理・関連資料
 
 実装変更が要求・設計・運用手順へ影響する場合は、関連文書も同時に見直します。
+
 - [要求仕様書](requirements-specification.md)
 - [データベース設計書](database-design.md)
-- [リポジトリ概要](../README.md)
+- [README（日本語）](../README.md)
+- [README（英語）](../README.en.md)
 - [ダッシュボード運用手順](../host/README.md)
+- [システム構成図（PlantUML）](class_diagram.puml)
+- [システム構成図（PNG）](class_diagram.png)

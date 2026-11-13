@@ -8,7 +8,7 @@
 
 本書は、現行のダッシュボード/APIが利用するイベントデータベースを定義します。検知端末は通過イベントをHTTP APIへ送信し、WebアプリケーションがMariaDBの`events`テーブルへ保存します。
 
-本書は`host/database/init/001-create-events.sql`、`host/host/api/event.php`、`host/host/api/analytics.php`、`host/host/index.php`の実装に合わせています。旧設計に記載されていたSQLiteの`detection_log`および`statistics`テーブルは現行実装では使用していません。
+本書は[`001-create-events.sql`](../host/database/init/001-create-events.sql)、[`event.php`](../host/host/api/event.php)、[`analytics.php`](../host/host/api/analytics.php)、[`index.php`](../host/host/index.php)の実装に合わせています。旧設計に記載されていたSQLiteの`detection_log`および`statistics`テーブルは現行実装では使用していません。
 
 ## 2. データ管理方針
 
@@ -22,7 +22,7 @@
 
 | テーブル | 用途 | 作成定義 |
 | --- | --- | --- |
-| `events` | 端末から受信した方向判定イベント | `host/database/init/001-create-events.sql` |
+| `events` | 端末から受信した方向判定イベント | [`001-create-events.sql`](../host/database/init/001-create-events.sql) |
 
 ## 4. `events`テーブル
 
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS events (
 
 ## 5. 登録インターフェース
 
-`POST /api/event.php`は`X-API-Key`ヘッダーでAPIキーを検証し、JSONの入力を検証した後に`events`へ登録します。成功時はHTTP 201と`{"ok":true}`を返します。
+[`event.php`](../host/host/api/event.php)の`POST /api/event.php`は`X-API-Key`ヘッダーでAPIキーを検証し、JSONの入力を検証した後に`events`へ登録します。成功時はHTTP 201と`{"ok":true}`を返します。
 
 | JSON項目 | 型・制約 | 保存先 |
 | --- | --- | --- |
@@ -83,25 +83,25 @@ CREATE TABLE IF NOT EXISTS events (
 
 ## 6. 集計と参照
 
-- ダッシュボードは全イベント数、逆走イベント数、逆走率をイベントレコードから算出します。
+- ダッシュボード（[`index.php`](../host/host/index.php)）は全イベント数、逆走イベント数、逆走率をイベントレコードから算出します。
 - 端末別の集計は端末ごとのイベント数、逆走数、最終検知時刻を表示します。
 - 最新イベントは`id`の降順で最大50件表示します。
-- 分析APIは直近24時間を時間単位で集計し、イベント数、逆走数、`device_name`と`track_id`の組み合わせによる人数カウントを返します。
+- 分析API（[`analytics.php`](../host/host/api/analytics.php)）は直近24時間を時間単位で集計し、イベント数、逆走数、`device_name`と`track_id`の組み合わせによる人数カウントを返します。
 - ダッシュボードと分析APIはログインセッションを要求します。
 
 これらは表示時の集計であり、`statistics`等の集計テーブルへの定期保存を意味しません。
 
 ## 7. 運用上の注意
 
-- Docker Composeの`db_data`ボリュームにDBデータを永続化します。`docker compose down -v`はボリュームを削除するため、通常の停止・再起動では使用しないでください。
+- Docker Composeの`db_data`ボリュームにDBデータを永続化します。`docker compose down -v`はボリュームを削除するため、通常の停止・再起動では使用しないでください。構成は[`compose.yaml`](../host/compose.yaml)を参照してください。
 - 既存DBを移行する場合は、移行元のスキーマとデータを先にバックアップし、現行SQL定義およびPHPが参照する列との互換性を確認してください。
 - APIキー、DBパスワード、ログイン情報はリポジトリに登録せず、環境設定・非公開設定ファイルで管理してください。
-- 定期バックアップを実施し、実際に復元できることも確認してください。
+- 定期バックアップを実施し、実際に復元できることも確認してください。手順は[`host/README.md`](../host/README.md)を参照してください。
 
 ## 8. 参照実装
 
-- `host/database/init/001-create-events.sql`
-- `host/host/api/event.php`
-- `host/host/api/analytics.php`
-- `host/host/index.php`
-- `host/compose.yaml`
+- [`001-create-events.sql`](../host/database/init/001-create-events.sql)
+- [`event.php`](../host/host/api/event.php)
+- [`analytics.php`](../host/host/api/analytics.php)
+- [`index.php`](../host/host/index.php)
+- [`compose.yaml`](../host/compose.yaml)

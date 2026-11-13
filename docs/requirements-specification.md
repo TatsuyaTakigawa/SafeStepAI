@@ -2,7 +2,7 @@
 
 - 文書の位置づけ：現行コードに基づく要求・実装仕様
 - 更新日：2026年11月11日
-- 参照実装：`pi/`、`host/`、`host/database/init/001-create-events.sql`
+- 参照実装：[`pi/`](../pi/)、[`host/`](../host/)、[`001-create-events.sql`](../host/database/init/001-create-events.sql)
 
 ## 1. 目的と範囲
 
@@ -14,22 +14,22 @@ SafeStep AIは、カメラ映像を端末上で処理して人物の通過方向
 
 | 構成 | 実装・役割 |
 | --- | --- |
-| 検知端末 | Raspberry Pi上でカメラ映像を処理。`pi/safestep_run.py`をUltralytics YOLOのトラッキング機能で実行 |
-| 音声再生 | `pi/alarm_player.py`が`warning_audio/alert.wav`を`aplay`で再生。検知プロセスからのトリガーファイルを監視 |
-| イベント送信 | `pi/safestep_client.py`が検知情報をJSONでイベントAPIへHTTP POST |
+| 検知端末 | Raspberry Pi上でカメラ映像を処理。[`safestep_run.py`](../pi/safestep_run.py)をUltralytics YOLOのトラッキング機能で実行 |
+| 音声再生 | [`alarm_player.py`](../pi/alarm_player.py)が[`alert.wav`](../pi/warning_audio/alert.wav)を`aplay`で再生。検知プロセスからのトリガーファイルを監視 |
+| イベント送信 | [`safestep_client.py`](../pi/safestep_client.py)が検知情報をJSONでイベントAPIへHTTP POST |
 | Web/API | PHP 8.3 + Apache。イベント受付API、ログイン、ダッシュボード、分析APIを提供 |
 | データベース | MariaDB 11.4。方向判定イベントを`events`テーブルに保存 |
-| 配備 | WebとDBは`host/compose.yaml`のDocker Composeサービスとして構成 |
+| 配備 | WebとDBは[`compose.yaml`](../host/compose.yaml)のDocker Composeサービスとして構成 |
 
 ### 2.1 データフロー
 
 1. YOLOがカメラ映像内の人物を検出・追跡します。
-2. バウンディングボックス中心のY座標と`LINE_Y`、`MARGIN`により、仮想ラインの上側・下側を判定します。
+2. バウンディングボックス中心のY座標と`LINE_Y`、`MARGIN`により、仮想ラインの上側・下側を判定します（[`safestep_run.py`](../pi/safestep_run.py)）。
 3. 同一追跡IDの側が変わった場合、`UP`または`DOWN`の通過イベントを生成します。
 4. `NORMAL_DIRECTION`と異なる方向を逆走として扱い、アラームトリガーを発行します。
-5. 端末名、検知時刻、追跡ID、方向、逆走フラグをAPIへ送信します。
-6. APIは認証・入力検証後、`events`テーブルへ保存します。
-7. 認証済みユーザーがダッシュボードと時間別分析を参照します。
+5. 端末名、検知時刻、追跡ID、方向、逆走フラグを[`safestep_client.py`](../pi/safestep_client.py)からAPIへ送信します。
+6. [`event.php`](../host/host/api/event.php)は認証・入力検証後、`events`テーブルへ保存します。
+7. 認証済みユーザーが[`index.php`](../host/host/index.php)のダッシュボードと[`analytics.php`](../host/host/api/analytics.php)の時間別分析を参照します。
 
 イベントAPIに映像フレームは送信しません。ダッシュボード／DBへ送られるのはイベントメタデータです。
 
@@ -37,22 +37,22 @@ SafeStep AIは、カメラ映像を端末上で処理して人物の通過方向
 
 | ID | 要件 | 状況・実装上の説明 |
 | --- | --- | --- |
-| FR-01 | カメラから人物を検出する | 実装済み。Ultralytics YOLOで`classes=[0]`を指定 |
+| FR-01 | カメラから人物を検出する | 実装済み。[`safestep_run.py`](../pi/safestep_run.py)でUltralytics YOLOの`classes=[0]`を指定 |
 | FR-02 | 人物をフレーム間で追跡する | 実装済み。YOLOの`model.track(..., persist=True)`を使用。独立したSORT実装とは記述しない |
 | FR-03 | 仮想ライン通過方向を判定する | 実装済み。バウンディングボックス中心Y座標と`LINE_Y`、`MARGIN`を使用。現在の設定値は仮置き |
 | FR-04 | 通常方向と逆方向を分類する | 実装済み。`NORMAL_DIRECTION`と通過方向を比較。現在の初期値は`DOWN` |
-| FR-05 | 逆走時に音声を鳴らす | 実装済み。検知側がトリガーファイルを更新し、プレイヤーがWAVファイルを再生 |
-| FR-06 | 通過イベントをサーバーへ送る | 実装済み。送信はバックグラウンドスレッドで行い、接続失敗で検知ループを待たせない設計 |
-| FR-07 | APIキーでイベント登録を保護する | 実装済み。`X-API-Key`ヘッダーを検証 |
-| FR-08 | イベントをDBへ保存する | 実装済み。MariaDBの`events`テーブルに保存 |
-| FR-09 | 管理者ログインとダッシュボードを提供する | 実装済み。ログインセッションで画面・分析APIを保護 |
-| FR-10 | イベント集計を表示する | 実装済み。全体・端末別の集計、最新50件、直近24時間の時間別集計 |
+| FR-05 | 逆走時に音声を鳴らす | 実装済み。検知側がトリガーファイルを更新し、[`alarm_player.py`](../pi/alarm_player.py)が[`alert.wav`](../pi/warning_audio/alert.wav)を再生 |
+| FR-06 | 通過イベントをサーバーへ送る | 実装済み。[`safestep_client.py`](../pi/safestep_client.py)が送信を行い、呼び出し側ではバックグラウンドスレッドを使用 |
+| FR-07 | APIキーでイベント登録を保護する | 実装済み。[`event.php`](../host/host/api/event.php)が`X-API-Key`ヘッダーを検証 |
+| FR-08 | イベントをDBへ保存する | 実装済み。MariaDBの`events`テーブルに保存（定義は[`001-create-events.sql`](../host/database/init/001-create-events.sql)） |
+| FR-09 | 管理者ログインとダッシュボードを提供する | 実装済み。ログインセッションで画面・分析APIを保護（[`auth.php`](../host/host/auth.php)） |
+| FR-10 | イベント集計を表示する | 実装済み。全体・端末別の集計、最新50件、直近24時間の時間別集計（[`index.php`](../host/host/index.php)、[`analytics.php`](../host/host/api/analytics.php)） |
 | FR-11 | 定時起動・停止を行う | 本リポジトリの確認対象コードでは保証されない。OSのスケジューラ等を用いる場合は別途設定・検証する |
 | FR-12 | イベントとは別に警告ログ・日次統計テーブルを保存する | 未実装。現行DBには`events`テーブルのみがあり、集計はクエリ時に行う |
 
 ## 4. 検知・警告仕様
 
-現行コードの初期設定は`pi/safestep_run.py`にあります。
+現行コードの初期設定は[`safestep_run.py`](../pi/safestep_run.py)にあります。
 
 | 設定 | 現在の値 | 意味 |
 | --- | --- | --- |
@@ -64,13 +64,13 @@ SafeStep AIは、カメラ映像を端末上で処理して人物の通過方向
 | `REVERSE_THRESHOLD` | `1` | アラームトリガーに必要な逆走ID数 |
 | `ALARM_COOLDOWN_SEC` | `0` | 検知コード側のクールダウン設定 |
 
-閾値到達時、検知コードは`trigger`ファイルを更新します。音声プレイヤーは`alert.wav`を再生し、再生中・再生後の3秒間に届いたトリガーを次回再生にまとめます。したがって、検知しきい値、イベント登録、実際の音声再生間隔は別の動作として扱います。
+閾値到達時、検知コードは`trigger`ファイルを更新します。音声プレイヤー（[`alarm_player.py`](../pi/alarm_player.py)）は[`alert.wav`](../pi/warning_audio/alert.wav)を再生し、再生中・再生後の3秒間に届いたトリガーを次回再生にまとめます。したがって、検知しきい値、イベント登録、実際の音声再生間隔は別の動作として扱います。
 
 上記の値は実環境に合わせて調整する必要があり、精度・遅延の保証値ではありません。
 
 ## 5. イベントAPI仕様
 
-- エンドポイント：`POST /api/event.php`
+- エンドポイント：`POST /api/event.php`（実装：[ `event.php`](../host/host/api/event.php)）
 - 認証：`X-API-Key`ヘッダー
 - Content-Type：`application/json`
 - 成功：HTTP 201、`{"ok":true}`
@@ -86,16 +86,16 @@ SafeStep AIは、カメラ映像を端末上で処理して人物の通過方向
 | `direction` | `UP`または`DOWN` |
 | `is_reverse` | `0`または`1`。省略時は`0` |
 
-検知側は`SAFESTEP_URL`、`SAFESTEP_API_KEY`、任意の`SAFESTEP_DEVICE`環境変数で接続先等を設定します。
+検知側（[`safestep_client.py`](../pi/safestep_client.py)）は`SAFESTEP_URL`、`SAFESTEP_API_KEY`、任意の`SAFESTEP_DEVICE`環境変数で接続先等を設定します。
 
 ## 6. Web画面・分析
 
-- ログイン認証済みのダッシュボードを提供します。
+- ログイン認証済みのダッシュボード（[`index.php`](../host/host/index.php)）を提供します。
 - ダッシュボードは5秒ごとに再読み込みされます。
 - 全端末のイベント総数、逆走件数、逆走率を表示します。
 - 端末ごとの件数、逆走件数、逆走率、最終イベント時刻を表示します。
 - 最新イベントを最大50件表示します。
-- 分析APIは直近24時間の時間別イベント数、逆走数、端末名と追跡IDの組み合わせによる人数カウントを返します。
+- 分析API（[`analytics.php`](../host/host/api/analytics.php)）は直近24時間の時間別イベント数、逆走数、端末名と追跡IDの組み合わせによる人数カウントを返します。
 - 集計はDBのイベントレコードから算出し、独立した統計テーブルには保存しません。
 
 ## 7. 非機能要件・制約
@@ -103,13 +103,13 @@ SafeStep AIは、カメラ映像を端末上で処理して人物の通過方向
 ### 7.1 セキュリティ
 
 - APIキー、DB認証情報、ログイン用ハッシュは設定ファイル／環境変数で管理し、Gitに登録しません。
-- Webアプリの設定ファイルはWeb公開ディレクトリ外から読み取り専用でマウントする構成です。
-- DBサービスのポートはComposeのホスト側に公開せず、Compose内部ネットワークで利用します。
+- Webアプリの設定ファイルはWeb公開ディレクトリ外から読み取り専用でマウントする構成です（設定・起動手順は[`host/README.md`](../host/README.md)を参照）。
+- DBサービスのポートはComposeのホスト側に公開せず、Compose内部ネットワークで利用します（[`compose.yaml`](../host/compose.yaml)）。
 - 現行ComposeのWeb公開はHTTPです。信頼できないネットワークやインターネットへ直接公開しないでください。
 
 ### 7.2 プライバシー
 
-- イベントAPIは画像・映像を受け取らず、イベントメタデータのみを保存します。
+- イベントAPI（[`event.php`](../host/host/api/event.php)）は画像・映像を受け取らず、イベントメタデータのみを保存します。
 - 追跡IDは検知・集計のための一時IDであり、氏名等の個人識別情報ではありません。ただし、設置・運用にあたっては施設のルールとプライバシー要件を確認します。
 - 本仕様は、周辺環境やOS設定を含むあらゆる映像保存の不存在を保証するものではありません。実機の設定も確認してください。
 
@@ -117,20 +117,23 @@ SafeStep AIは、カメラ映像を端末上で処理して人物の通過方向
 
 検知精度、FPS、CPU・メモリ使用量、警告遅延、長期稼働時間について、リポジトリ内に検証済みの数値結果はありません。性能要件を定める場合は、カメラ条件・照明・混雑度・試行回数を記録した実測試験を行い、目標値と測定値を分けて報告します。
 
-イベント送信はタイムアウト付きでバックグラウンド実行されますが、現行コードに永続的な送信キューや再送保証はありません。ネットワーク障害時のイベント欠落を許容しない運用には追加設計が必要です。
+イベント送信は[`safestep_client.py`](../pi/safestep_client.py)でタイムアウト付きで行われますが、現行コードに永続的な送信キューや再送保証はありません。ネットワーク障害時のイベント欠落を許容しない運用には追加設計が必要です。
 
 ## 8. 受入・評価項目
 
 1. 人物の通過と方向判定を、固定したカメラ条件で複数回確認する。
 2. 正方向・逆方向それぞれの試行数、正検知、見逃し、誤判定を記録する。
-3. 逆走時のトリガー、WAV再生、再生中の追加トリガーの挙動を確認する。
-4. APIの正常登録、認証失敗、入力エラー、DB障害時の応答を確認する。
-5. ダッシュボードのログイン制御、イベント表示、時間別集計をテストデータで確認する。
+3. 逆走時のトリガー、WAV再生、再生中の追加トリガーの挙動を確認する（[`alarm_player.py`](../pi/alarm_player.py)）。
+4. APIの正常登録、認証失敗、入力エラー、DB障害時の応答を確認する（[`event.php`](../host/host/api/event.php)）。
+5. ダッシュボードのログイン制御、イベント表示、時間別集計をテストデータで確認する（[`index.php`](../host/host/index.php)、[`analytics.php`](../host/host/api/analytics.php)）。
 6. 実環境で測定した性能値と試験条件を記録し、未測定項目を明記する。
 
 ## 9. 関連文書
 
-- [`database-design.md`](database-design.md)
-- [`project-plan.md`](project-plan.md)
-- [`../README.md`](../README.md)
-- [`../host/README.md`](../host/README.md)
+- [データベース設計書](database-design.md)
+- [プロジェクト計画書](project-plan.md)
+- [日本語README](../README.md)
+- [英語README](../README.en.md)
+- [ダッシュボード構築・運用手順](../host/README.md)
+- [システム構成図（PlantUML）](class_diagram.puml)
+- [システム構成図（PNG）](class_diagram.png)
