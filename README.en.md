@@ -167,5 +167,4 @@ Results depend on camera angle, virtual-line placement, lighting, occlusion, and
 
 ## Reference and License
 
-- README structure and presentation reference: [note article](https://note.com/yukikkoaimanabi/n/n587aa648e0f9#809c1104-0bf1-4e3c-b4d2-13aa54cd37c2)
 - License: [MIT License](LICENSE)
