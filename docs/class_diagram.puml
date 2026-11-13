@@ -1,52 +1,56 @@
 @startuml
-title SafeStep AI クラス図（初期設計）
+' This diagram documents the current repository implementation.
+' The code is organized as scripts and PHP endpoints, not as these domain classes.
+title SafeStep AI 現行実装のモジュール構成図
+left to right direction
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
 
-class Camera {
-    - cameraId : int
-    + initialize()
-    + captureFrame()
-    + release()
+package "検知端末 / Raspberry Pi" {
+    component "カメラ" as Camera
+    component "pi/safestep_run.py\nYOLO tracking・方向判定" as Detector
+    component "pi/safestep_client.py\nsend_event()" as EventClient
+    component "trigger ファイル" as Trigger
+    component "pi/alarm_player.py\naplay / alert.wav" as AlarmPlayer
+
+    Camera --> Detector : source=0\n人物フレーム
+    Detector --> EventClient : send_async()\n通過イベント
+    Detector --> Trigger : 逆走時に更新
+    Trigger --> AlarmPlayer : mtime監視
 }
 
-class VisionProcessor {
-    - model
-    + loadModel()
-    + processFrame(frame)
+package "ダッシュボード端末 / Docker Compose" {
+    component "host/host/api/event.php\nPOST /api/event.php" as EventAPI
+    component "host/host/login.php\n認証" as Login
+    component "host/host/auth.php\nセッション確認" as Auth
+    component "host/host/index.php\nダッシュボード" as Dashboard
+    component "host/host/api/analytics.php\n時間別集計API" as Analytics
+    database "MariaDB\nevents テーブル" as Events
 }
 
-class DirectionJudge {
-    - virtualLine
-    + judge(tracks)
-}
+EventClient --> EventAPI : HTTP POST\nJSON + X-API-Key
+EventAPI --> Events : イベントINSERT
+Login --> Auth : セッション開始
+Dashboard --> Auth : require_login()
+Analytics --> Auth : require_login()
+Dashboard --> Events : イベント・端末別集計をSELECT
+Analytics --> Events : 直近24時間を時間別集計
 
-class VoicePlayer {
-    - cooldownTime
-    - lastPlayTime
-    + canPlay()
-    + playWarning()
-}
+note right of Detector
+  現行設定はテスト用の初期値。
+  LINE_Y、MARGIN、NORMAL_DIRECTION は
+  設置環境に合わせて調整する。
+end note
 
-class DatabaseManager {
-    - connection
-    + connect()
-    + saveResult(result)
-    + close()
-}
+note bottom of Events
+  保存するのはイベントメタデータ。
+  画像・映像はAPIへ送信しない。
+  集計用の独立テーブルはなく、集計はクエリ時に算出する。
+end note
 
-class Config {
-    + confidenceThreshold
-    + modelPath
-    + warningCooldown
-    + databasePath
-}
-
-Camera --> VisionProcessor : frame
-VisionProcessor --> DirectionJudge : tracking results
-DirectionJudge --> VoicePlayer : warning
-DirectionJudge --> DatabaseManager : result
-
-VisionProcessor ..> Config
-VoicePlayer ..> Config
-DatabaseManager ..> Config
-
+note bottom
+  本リポジトリには図中の名称に対応する
+  Python/PHPのクラス定義はないため、
+  旧クラス図を現行のモジュール構成図に置き換えている。
+end note
 @enduml
