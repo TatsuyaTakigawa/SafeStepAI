@@ -34,7 +34,12 @@ def get_mtime():
 def play(path):
     """Start playing the file. Returns the process, or None on failure."""
     try:
-        return subprocess.Popen(["aplay", "-q", path])
+        return subprocess.Popen([
+            "aplay",
+            "-D", "plughw:CARD=UACDemoV10,DEV=0",
+            "-q",
+            path,
+        ])
     except OSError as e:
         print(f"Cannot start aplay ({type(e).__name__})")
         return None
